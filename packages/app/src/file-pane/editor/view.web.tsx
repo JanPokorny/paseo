@@ -4,7 +4,7 @@ import { Annotation, Compartment, EditorState, Transaction } from "@codemirror/s
 import { EditorView } from "@codemirror/view";
 import { getLanguageForFile } from "@getpaseo/highlight";
 import { getCM, vim } from "@replit/codemirror-vim";
-import { isRenderedMarkdownFile } from "@/components/file-pane-render-mode";
+import { isRenderedMarkdownFile } from "@/file-panels";
 import type { WorkspaceFileLocation } from "@/workspace/file-open";
 import type { FileEditorModel } from "./model";
 import { editorBaseExtensions, editorTheme, type EditorVisualTheme } from "./extensions.web";
@@ -165,4 +165,7 @@ const FRAME_STYLE = {
   minHeight: 0,
   minWidth: 0,
 } as const;
-const HOST_STYLE = { flex: 1, minHeight: 0, overflow: "hidden" } as const;
+// CodeMirror's scrollIntoView scrolls every overflowing ancestor and stops at a fixed or sticky
+// one. Sticky (with no offsets it lays out like relative) keeps line reveals inside the editor, so
+// they don't shift the host around it, such as the compact workspace sheet.
+const HOST_STYLE = { flex: 1, minHeight: 0, overflow: "hidden", position: "sticky" } as const;

@@ -22,7 +22,6 @@ import {
   type ServerInfoStatusPayload,
   type ScriptStatusUpdateMessage,
   type SessionOutboundMessage,
-  type WorkspaceSetupSnapshot,
   type WSHelloMessage,
   type WSInboundMessage,
   WSInboundMessageSchema,
@@ -33,6 +32,7 @@ import {
 } from "./messages.js";
 import { asUint8Array, decodeBinaryFrame } from "@getpaseo/protocol/binary-frames/index";
 import type { TerminalActivity } from "@getpaseo/protocol/terminal-activity";
+import { MAX_WEBSOCKET_MESSAGE_BYTES } from "@getpaseo/protocol/websocket-message-limit";
 import type { HostnamesConfig } from "./hostnames.js";
 import { isHostnameAllowed } from "./hostnames.js";
 import {
@@ -42,6 +42,7 @@ import {
   type SessionRuntimeMetrics,
 } from "./session.js";
 import type { HubRelationshipManagement } from "./hub/relationship-controller.js";
+import { WorkspaceSetupObservation } from "./workspace-setup-observation.js";
 import { WorkspaceSetupRuntime } from "./workspace-setup-runtime.js";
 import type { HubExecutionAgents } from "./hub/daemon-executions.js";
 import type { AgentProvider } from "./agent/agent-sdk-types.js";
@@ -246,6 +247,7 @@ function createFallbackWorkspaceGitService(): WorkspaceGitService {
     suggestBranchesForCwd: async () => [],
     listStashes: async () => [],
     listWorktrees: async () => [],
+    invalidateWorktrees: () => {},
     getProjectSlug: async (cwd: string) => {
       const snapshot = createFallbackWorkspaceGitSnapshot(cwd);
       return deriveProjectSlug(cwd, snapshot.git.isGit ? snapshot.git.remoteUrl : null);
@@ -568,7 +570,7 @@ export class VoiceAssistantWebSocketServer {
   } | null;
   private readonly voiceSpeakHandlers = new Map<string, VoiceSpeakHandler>();
   private readonly voiceCallerContexts = new Map<string, VoiceCallerContext>();
-  private readonly workspaceSetupSnapshots = new Map<string, WorkspaceSetupSnapshot>();
+  private readonly workspaceSetupObservation = new WorkspaceSetupObservation();
   private readonly workspaceSetupRuntime: WorkspaceSetupRuntime;
   private readonly providerSnapshotManager: ProviderSnapshotManager;
   private onLifecycleIntent!: ((intent: SessionLifecycleIntent) => void) | null;
@@ -821,6 +823,7 @@ export class VoiceAssistantWebSocketServer {
     const wss = new WebSocketServer({
       server,
       path: "/ws",
+      maxPayload: MAX_WEBSOCKET_MESSAGE_BYTES,
       handleProtocols: (protocols) => selectWebSocketProtocol(protocols, password),
       verifyClient: ({ req }, callback) => {
         this.verifyWsUpgrade(
@@ -952,6 +955,13 @@ export class VoiceAssistantWebSocketServer {
   }
 
   public broadcast(message: WSOutboundMessage): void {
+    // External setup producers (MCP and schedules) publish once, including when no
+    // clients are connected. Session-owned observers perform the source routing.
+    if (message.type === "session" && message.message.type === "workspace_setup_progress") {
+      const { workspaceId, subscriptionId: _subscriptionId, ...snapshot } = message.message.payload;
+      this.workspaceSetupObservation.publish(workspaceId, snapshot);
+      return;
+    }
     if (message.type === "session") {
       for (const connection of new Set(this.sessions.values())) {
         connection.session.publish(message.message);
@@ -1503,7 +1513,7 @@ export class VoiceAssistantWebSocketServer {
       hubRelationships: options.hubRelationships,
       serviceProxy: this.serviceProxy ?? undefined,
       scriptRuntimeStore: this.scriptRuntimeStore ?? undefined,
-      workspaceSetupSnapshots: this.workspaceSetupSnapshots,
+      workspaceSetupObservation: this.workspaceSetupObservation,
       workspaceSetupRuntime: this.workspaceSetupRuntime,
       onBranchChanged: this.onBranchChanged ?? undefined,
       getDaemonTcpPort: this.getDaemonTcpPort ?? undefined,
@@ -1793,12 +1803,14 @@ export class VoiceAssistantWebSocketServer {
         workspaceRequestReceipts: true,
         creationLifecycle: true,
         hubAgentRpc: true,
+        backgroundWorkspaces: true,
         // COMPAT(directorySync): added in v0.3.x, remove gate after 2027-02-12.
         directorySync: true,
         // COMPAT(workspaceLabels): added in v0.5.0, remove after 2027-08-14.
         ...(this.workspaceLabelService ? { workspaceLabels: true } : {}),
         // COMPAT(workspaceSetupRun): added in v0.7.3, remove gate after 2027-09-02.
         workspaceSetupRun: true,
+        workspaceSetupObservation: true,
         // COMPAT(providersSnapshot): keep optional until all clients rely on snapshot flow.
         providersSnapshot: true,
         // COMPAT(providersSnapshotCwd): added in v0.3.2, remove gate after 2027-02-10.
@@ -1911,6 +1923,7 @@ export class VoiceAssistantWebSocketServer {
         commitBaseClassification: true,
         // COMPAT(providerRemoval): added in v0.1.105, drop the gate when floor >= v0.1.105.
         providerRemoval: true,
+        hopliteProvider: this.providerSnapshotManager.supportsConfigRequiredProvider("hoplite"),
         // COMPAT(importSessionWorkspaceTarget): added in v0.1.110, remove gate after 2027-01-16.
         importSessionWorkspaceTarget: true,
         // COMPAT(importSessionSearch): added in v0.7.3, remove gate after 2027-03-02.
@@ -1923,6 +1936,7 @@ export class VoiceAssistantWebSocketServer {
         explicitEventSubscriptions: true,
         // COMPAT(canonicalSubmittedPrompts): added in v0.2.6, remove gate after 2027-01-30.
         canonicalSubmittedPrompts: true,
+        agentMessageProvenance: true,
         // COMPAT(stableProjectIdentity): added in v0.1.109, remove gate after 2027-01-15.
         stableProjectIdentity: true,
         // COMPAT(workspaceScriptManagement): added in v0.1.105, remove gate after 2027-01-10.

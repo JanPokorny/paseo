@@ -31,6 +31,7 @@ export const es: TranslationResources = {
     back: "Atrás",
     loading: "Cargando...",
     actions: {
+      save: "Guardar",
       back: "Atrás",
       cancel: "Cancelar",
       close: "Cerrar",
@@ -124,6 +125,8 @@ export const es: TranslationResources = {
     input: {
       accessibilityLabel: "Agente de mensajes...",
       terminalAccessibilityLabel: "Terminal prompt",
+      fullscreen: "Pantalla completa",
+      exitFullscreen: "Salir de pantalla completa",
       focusHint: "{{shortcut}}para enfocar",
       addAttachment: "Agregar archivo adjunto",
       interruptAgent: "agente de interrupción",
@@ -362,6 +365,7 @@ export const es: TranslationResources = {
       details: "Detalles",
     },
     dictation: {
+      paused: "Micrófono interrumpido. Esperando para reanudar…",
       start: "Iniciar dictado de voz",
       cancel: "Cancelar dictado",
       retry: "Reintentar el dictado",
@@ -371,6 +375,7 @@ export const es: TranslationResources = {
       failedRetry: "El dictado falló. Toca reintentar.",
     },
     question: {
+      responseFailed: "No se pudo enviar tu respuesta. Inténtalo de nuevo.",
       submit: "Entregar",
       next: "Siguiente",
       answerPlaceholder: "Escribe tu respuesta...",
@@ -539,6 +544,7 @@ export const es: TranslationResources = {
       },
     },
     setup: {
+      updateHost: "Actualiza el host para ver los detalles de configuración del espacio de trabajo",
       descriptor: {
         label: "Configuración",
         completed: "Configuración completada",
@@ -616,6 +622,9 @@ export const es: TranslationResources = {
       updateHost: "Actualiza el host para usar el renderizador de terminal nativo.",
       unableToSubscribe: "No se puede suscribir al terminal",
     },
+    sheet: {
+      openAsTab: "Abrir como pestaña",
+    },
     tabs: {
       loading: "Cargando...",
       modified: "Cambios sin guardar",
@@ -631,7 +640,7 @@ export const es: TranslationResources = {
       },
       switcher: {
         trigger: "Cambiar pestañas ({{count}}abierto)",
-        title: "Cambiar pestaña",
+        title: "Pestañas del workspace",
         searchPlaceholder: "Pestañas de búsqueda",
       },
       menu: {
@@ -730,6 +739,7 @@ export const es: TranslationResources = {
     header: {
       actions: {
         workspaceActions: "AccionesWorkspace",
+        workspaceActionsUnhealthy: "Acciones del workspace, hay un servicio con problemas",
         newAgent: "Nuevo agente",
         newTerminal: "Nueva terminal",
         newBrowser: "Nueva pestaña del navegador",
@@ -778,6 +788,8 @@ export const es: TranslationResources = {
         exitCode: "salir de{{code}}",
         startFailed: "No se pudo iniciar{{scriptName}}",
         stopFailed: "No se pudo detener{{scriptName}}",
+        running: "En ejecución",
+        runningCount: "{{count}} en ejecución",
       },
     },
     tree: {
@@ -1093,16 +1105,18 @@ export const es: TranslationResources = {
           open: "Abierto",
         },
         activity: {
-          commented: "Comentado",
-          approved: "Aprobado",
-          requestedChanges: "Cambios solicitados",
-          reviewed: "Revisado",
+          commented: "Comentó",
+          approved: "Aprobó",
+          requestedChanges: "Solicitó cambios",
+          reviewed: "Revisó",
         },
         time: {
           justNow: "En este momento",
         },
         thread: {
           discussion: "Hilo de discusión",
+          resolved: "Resuelto",
+          outdated: "Desactualizado",
         },
         errors: {
           statusLoadFailed: "No se puede cargar el estado de la solicitud de extracción",
@@ -1181,6 +1195,7 @@ export const es: TranslationResources = {
       done: "Terminado",
     },
     display: {
+      showBackground: "Mostrar espacios en segundo plano",
       trigger: "Preferencias de visualización",
       heading: "Visualización",
       grouping: {
@@ -1356,8 +1371,9 @@ export const es: TranslationResources = {
     },
     fields: {
       project: "Proyecto",
-      base: "Base",
+      branch: "Rama",
       baseNotApplicable: "No aplicable",
+      host: "Host",
     },
     titlePlaceholder: "Título (opcional)",
     errors: {
@@ -1694,13 +1710,18 @@ export const es: TranslationResources = {
     title: "Agregar proveedor",
     search: "Proveedores de búsqueda",
     noProviders: "No se encontraron proveedores",
+    clearSearch: "Borrar búsqueda",
     actions: {
       add: "Agregar",
+      addProvider: "Añadir {{provider}}",
       adding: "Añadiendo",
       installed: "Instalado",
       cancel: "Cancelar",
       installInstructions: "Instrucciones de instalación",
       installInstructionsFor: "Instrucciones de instalación de{{provider}}",
+    },
+    types: {
+      acp: "ACP",
     },
     errors: {
       unableToInstall: "No se puede instalar el proveedor",
@@ -2050,6 +2071,17 @@ export const es: TranslationResources = {
     accessibility: "Ventana de contexto{{percentage}}% utilizada",
   },
   review: {
+    feedback: {
+      send: "Enviar comentarios ({{count}})",
+      sending: "Enviando comentarios ({{count}})",
+      chooseAgent: "Elegir un agente",
+      sent: "Comentarios enviados a {{recipient}}",
+      "no-agents": "Abre una pestaña de agente en este espacio de trabajo para enviar comentarios.",
+      disconnected: "Conéctate al host para enviar comentarios.",
+      "no-context": "Los comentarios guardados ya no coinciden con este diff.",
+      failed: "No se pudieron enviar los comentarios. Inténtalo de nuevo.",
+      prompt: "Por favor, atiende esta revisión de código.",
+    },
     comment: {
       add: "Agregar comentario de revisión",
       edit: "Editar comentario de revisión",
@@ -2060,6 +2092,70 @@ export const es: TranslationResources = {
       cancelAccessibility: "Cancelar comentario de revisión",
       save: "Comentario",
       saveAccessibility: "Guardar comentario de revisión",
+    },
+  },
+  providerUsage: {
+    options: "Configuración",
+    refreshFailed: "No se pudo actualizar el uso",
+    noHosts: "No hay hosts conectados",
+    agentError: "No se pudo cargar el uso: {{reason}}",
+    pin: "Fijar",
+    unpin: "Desfijar",
+    displayAs: "Porcentajes",
+    displayUsed: "Usado",
+    displayRemaining: "Restante",
+    showInSidebar: "Resumen en la barra lateral",
+    showInSidebarHint: "Los períodos fijados aparecen al pie de la barra lateral",
+    runToRefresh: "Ejecuta {{command}} para actualizar.",
+    signInAgain: "Vuelve a iniciar sesión.",
+    loginRejected: "Inicio de sesión rechazado (HTTP {{status}}). {{remedy}}",
+    loginExpired: "La sesión caducó {{relativeTime}}. {{remedy}}",
+    title: "Uso del plan",
+    refresh: "Actualizar",
+    refreshAll: "Actualizar todo",
+    refreshing: "Actualizando...",
+    loading: "Cargando uso...",
+    empty: "No hay datos de uso",
+    errorTitle: "No se pudo cargar el uso",
+    hostUnavailable: "Conéctate a {{host}} para ver el uso del proveedor",
+    hostUpgradeRequired: "Actualiza {{host}} para ver el uso del proveedor",
+    clientUnavailable: "La conexión con el host no está lista",
+    retry: "Intentar de nuevo",
+    tooltipLoading: "Cargando uso del plan...",
+    status: {
+      error: "Error",
+      unavailable: "No disponible",
+    },
+    values: {
+      used: "Usado: {{percentage}}",
+      remaining: "Quedan {{amount}}",
+    },
+    labels: {
+      session: "Sesión",
+      weekly: "Semanal",
+      monthly: "Mensual",
+      codeReview: "Revisión de código",
+      credits: "Créditos",
+      monthlyCredits: "Créditos mensuales",
+    },
+    duration: {
+      days: "{{value}} d",
+      hours: "{{value}} h",
+      minutes: "{{value}} min",
+    },
+    timing: {
+      lastUpdated: "Última actualización {{relativeTime}}",
+      noSuccessfulUpdate: "No hay actualizaciones correctas",
+      resetTimePassed: "Pasó la hora de restablecimiento",
+      resettingNow: "se restablece ahora",
+      resetsIn: "se restablece en {{duration}}",
+      runsOutNow: "se agota ahora",
+      runsOutIn: "se agota en {{duration}}",
+      justNow: "ahora mismo",
+      daysAgo: "hace {{value}} d",
+      hoursAgo: "hace {{value}} h",
+      minutesAgo: "hace {{value}} min",
+      updated: "Actualizado {{relativeTime}}",
     },
   },
   settings: {
@@ -2356,6 +2452,7 @@ export const es: TranslationResources = {
       searchPlaceholder: "Buscar atajos",
       unavailableOnMobile: "Los atajos de teclado solo están disponibles en el escritorio",
       capturePrompt: "Presione el acceso directo...",
+      captureIndexPrompt: "Termina con un número del 1 al 9.",
       unassigned: "Sin asignar",
       actions: {
         menu: "Acciones para {{name}}",

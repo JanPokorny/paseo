@@ -107,6 +107,12 @@ absent from the installed plugin list and source configuration; their client bun
 appear in the plugin catalog. Editing one in development requires a daemon restart.
 Directory, Git, and npm installs cannot use a built-in ID.
 
+A provider registration with `requiresConfiguration: true` participates only while its ID exists
+under `agents.providers`. Hoplite uses this for catalog opt-in. Add writes `{ "enabled": true }`
+without `extends`, so it selects the bundled adapter. Remove deletes the config entry; setting
+`enabled: false` keeps the entry. The bundled JavaScript still loads at startup, but an absent
+provider does not enter executable resolution or catalog discovery.
+
 Provider plugins use separate installation and provider IDs. `muse-provider` registers the
 selectable `muse` provider (Muse Code) and a usage source. Its `status({ launch })` reports
 availability and a diagnostic after the daemon resolves the executable. Configure command,
@@ -117,14 +123,18 @@ the bundled integration; an entry with `extends` shadows it with a custom provid
 
 ## Install from a registry
 
-Registry installs are off by default. Set `pluginRegistryEnabled: true` in daemon config or
-`PASEO_PLUGIN_REGISTRY_ENABLED=1`, then restart the daemon. While they are off, bare
-`owner/repo` is GitHub shorthand and the daemon never contacts a registry.
-
-With registry installs on, `paseo plugin install owner/slug` installs the registry's reviewed
-artifact, and GitHub shorthand requires `github:`. Registry installs
+`paseo plugin add owner/slug` installs the registry's reviewed artifact by default.
+Browse published plugins at [paseo.sh/plugins](https://paseo.sh/plugins).
+Use `git:owner/repository` or a full Git URL for a Git source. Registry installs
 keep the registry URL and ID, so update checks use its approved pin. Explicit version/ref
 selection is unavailable for registry installs; install an explicit source to select your own.
+
+Registry overviews are untrusted author content, even before installation. Render them with
+`@getpaseo/protocol/plugin-overview`: no raw HTML, HTTPS-only links and images, no relative
+URLs, and isolated external links. The website adapter and corpus tests live in
+`packages/website/src/plugins/overview.tsx` and `overview.test.tsx`; the reusable corpus is
+`packages/protocol/tests/fixtures/plugin-overview.json`. A future app overview must share
+this policy. Installed-plugin descriptions in the app remain plain text.
 
 Use `host/owner/slug` for a registry at `https://host`, or set
 `PASEO_PLUGIN_REGISTRY` to change the default base (including a path prefix).
@@ -138,13 +148,13 @@ owns static hosting, record shapes, pins, and advisory install counts.
 
 ## Install a Git source
 
-GitHub repositories use `owner/repository` or `github:owner/repository`. Other hosts use a Git
-URL. An existing directory still wins over source resolution.
+GitHub repositories use `git:owner/repository` or `github:owner/repository`. Other hosts use a Git
+URL.
 
 ```bash
-paseo plugin install owner/repository
+paseo plugin install git:owner/repository
 paseo plugin install https://gitlab.com/group/repository.git
-paseo plugin install owner/monorepo:plugins/review
+paseo plugin install git:owner/monorepo:plugins/review
 paseo plugin install github:owner/repository --ref main
 ```
 
@@ -155,8 +165,9 @@ and ask for approval. `ls` reports the installed commit without contacting the r
 ## Managed source ownership
 
 The [public source reference](../public-docs/plugins/reference.md#plugin-sources) owns identifier
-syntax and npm prerequisites; the [publishing guide](../public-docs/plugins/publishing.md) owns distribution. Both clients send the source unchanged
-through `installPluginSource`; only the daemon resolves host paths and acquires sources.
+syntax and npm prerequisites; the [publishing guide](../public-docs/plugins/publishing.md) owns distribution. The CLI resolves directory sources before
+calling `installPluginSource`; see the public source reference for CLI and app path semantics.
+Only the daemon reads plugin files and acquires sources.
 
 `ManagedPluginSources` owns acquisition and offline source description. Config stores the active
 directory; sources.json stores managed kind and the Git acquisition remote. The remote is needed
@@ -229,8 +240,9 @@ Do not put any other code modules in the plugin root.
 
 Shared files import contract helpers and types from `@getpaseo/plugin`. Server handler files import
 `PluginHandlerContext` from `@getpaseo/plugin/server`. Client files import Paseo UI from
-`@getpaseo/plugin/client/react-native`. Its `Icon` resolves a Lucide name using the client's installed icon
-set; an unknown name renders nothing so it cannot break the plugin surface.
+`@getpaseo/plugin/client/react-native`. Its `Icon` draws a Lucide name from the client's installed
+icon set, or any `PluginIcon` through its `icon` prop; an unknown name or unsafe SVG renders nothing
+so it cannot break the plugin surface.
 Its controlled modal keeps presentation metadata on `<Modal title="…" icon={…}>` and body UI in
 `<Modal.Content>`. Body layout, sheet-aware scrolling, and clipboard actions follow the
 [host UI contract](../public-docs/plugins/reference.md#host-ui).
@@ -321,7 +333,7 @@ created by plugin code. Paseo removes registered contributions, unmounts surface
 state, rejects pending RPCs, closes the plugin's daemon session, and stops the subprocess. Cleanup
 errors are logged and do not interrupt host teardown.
 
-Paseo owns the route, screen header, Lucide icon validation, close action, theme DTO, layout facts,
+Paseo owns the route, screen header, icon validation, close action, theme DTO, layout facts,
 and render error boundary. The contributed component owns the complete body below the header.
 The plugin owns the header's text through the screen's `title` (`resolvePluginScreenTitle` in
 `plugins/surface-contribution.ts`). A legacy `addSidebarItem` route (`/sidebar/<id>`) shows the
@@ -388,6 +400,25 @@ belongs to the app; plugins do not receive Expo Router or workspace-layout store
 See the public [navigation fields](../public-docs/plugins/reference.md#screens-and-sidebar-items)
 and [external links and workspace browsers](../public-docs/plugins/reference.md#external-links-and-workspace-browsers)
 for the author-facing contract.
+
+### Plugin icons
+
+The [public reference](../public-docs/plugins/reference.md#icons) owns the author API: a contribution
+`icon` is a Lucide name, `{ svg }`, or a component.
+
+- `findSvgIconProblem` in the SDK root (`packages/plugin/src/icons.ts`) is the only SVG rule set.
+  The daemon applies it to provider and usage-source icon files; the app applies it to inline
+  icons. Change the rules there, never at a call site.
+- The app validates each icon once, at registration, through `parsePluginIcon` in
+  `packages/app/src/plugins/icons.ts`. Rendering trusts the stored icon.
+- That module is the only code that branches on the icon form. Surfaces draw with
+  `PluginIconView`, or take a stable component from `pluginIconComponent` when their slot expects
+  one. Lucide and SVG icons receive only size and color, so the host props a button passes to its
+  component icon never reach an SVG element.
+- Attachment sources take `PluginSerializableIcon`: composer drafts persist the source's icon with
+  each attachment, and a component cannot be stored.
+- The plugin compiler loads `.svg` imports as text, so `import icon from "./client/icon.svg"` is the
+  markup string.
 
 ## Lifecycle hooks
 
@@ -480,15 +511,13 @@ provider implementation. The public [provider plugin guide](../public-docs/plugi
 owns author workflow, lifecycle, testing, and distribution guidance.
 
 `ProviderRegistration.icon` is a file path relative to the plugin directory, such as `icon.svg`.
-It must resolve inside that directory to a regular SVG file no larger than 64 KiB. The SVG must be
-self-contained: scripts, styles, `foreignObject`, event-handler attributes, JavaScript URLs, and
-external `href` or `xlink:href` references are rejected. Fragment references such as `#mark` are
-allowed. Paseo reads and sanitizes the file when the plugin starts; the string is never an inline
-SVG or URL.
+It must resolve inside that directory to a regular file that passes the shared SVG icon rules
+(see [Plugin icons](#plugin-icons)). Paseo reads and validates the file when the plugin starts; the
+string is never inline SVG or a URL.
 
 ## Usage sources
 
-Register a usage source from `index.server.ts` with `server.registerUsageSource()`. Import `UsageSourceRegistration` and normalization helpers from `@getpaseo/plugin/server/usage`. The plugin owns account discovery, harness labels, and credential-store reads; the daemon owns account grouping and the fetch cache. Agent popovers use only the agent's own login. The host-wide Usage screen falls back across an account's logins; any success shows usage only, and all failures show every login's labeled error and remedy. Follow the [usage source discovery contract](../public-docs/plugins/reference.md#usage-sources). The resolved launch environment crosses into the trusted, unsandboxed plugin subprocess for session discovery. Usage queries never run lifecycle hooks. Inputs are validated in the plugin process and remain daemon-side. `icon` uses the same sanitized SVG file rules as provider icons.
+Register a usage source from `index.server.ts` with `server.registerUsageSource()`. Import `UsageSourceRegistration` and normalization helpers from `@getpaseo/plugin/server/usage`. The plugin owns account discovery, harness labels, and credential-store reads; the daemon owns account grouping and the fetch cache. Agent popovers use only the agent's own login. The host-wide Usage modal falls back across an account's logins; any success shows usage only, and all failures show every login's labeled error and remedy. Follow the [usage source discovery contract](../public-docs/plugins/reference.md#usage-sources). The resolved launch environment crosses into the trusted, unsandboxed plugin subprocess for session discovery. Usage queries never run lifecycle hooks. Inputs are validated in the plugin process and remain daemon-side. `icon` uses the same SVG file rules as provider icons.
 
 The daemon calls discovery for `usage.list_reports`; the client gates this RPC on `server_info.features.usageSources`. The old `provider.usage.list` RPC maps discovered reports for older clients.
 

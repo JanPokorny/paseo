@@ -20,6 +20,30 @@ function flattenKeys(value: unknown, prefix = ""): string[] {
   return entries.flatMap(([key, child]) => flattenKeys(child, prefix ? `${prefix}.${key}` : key));
 }
 
+const pluralSuffixPattern = /_(zero|one|two|few|many|other)$/;
+const arabicPluralSuffixes = ["zero", "one", "two", "few", "many", "other"] as const;
+const arabicProviderUsagePluralKeys = [
+  "providerUsage.duration.days",
+  "providerUsage.duration.hours",
+  "providerUsage.duration.minutes",
+  "providerUsage.timing.daysAgo",
+  "providerUsage.timing.hoursAgo",
+  "providerUsage.timing.minutesAgo",
+] as const;
+
+function canonicalKeys(value: unknown): string[] {
+  const keys = flattenKeys(value);
+  const keySet = new Set(keys);
+  return [
+    ...new Set(
+      keys.map((key) => {
+        const baseKey = key.replace(pluralSuffixPattern, "");
+        return baseKey !== key && keySet.has(baseKey) ? baseKey : key;
+      }),
+    ),
+  ].sort();
+}
+
 function flattenStrings(value: unknown, prefix = ""): Record<string, string> {
   if (typeof value === "string") {
     return { [prefix]: value };
@@ -76,6 +100,7 @@ const untranslatedLocalFallbacks = [
 
 const pullRequestPanelSources = [
   "git/pull-request-panel/pane.tsx",
+  "git/pull-request-panel/data.ts",
   "git/pull-request-panel/checks-section.tsx",
   "components/sidebar/sidebar-status-list.tsx",
 ] as const;
@@ -87,6 +112,16 @@ const untranslatedPullRequestPanelLabels = [
   "Adding...",
   "Comment actions",
   "Thread actions",
+  "Commented",
+  "Approved",
+  "Requested changes",
+  "Reviewed",
+  "Draft",
+  "Merged",
+  "Closed",
+  "Open",
+  "Resolved",
+  "Outdated",
 ] as const;
 
 function findUntranslatedPullRequestPanelLabels(): string[] {
@@ -133,15 +168,24 @@ function findUntranslatedConnectionErrors(): string[] {
 
 describe("translation resources", () => {
   it("keeps all supported language keys in sync with English", () => {
-    const englishKeys = flattenKeys(en).sort();
-    expect(flattenKeys(ar).sort()).toEqual(englishKeys);
-    expect(flattenKeys(es).sort()).toEqual(englishKeys);
-    expect(flattenKeys(fr).sort()).toEqual(englishKeys);
-    expect(flattenKeys(ja).sort()).toEqual(englishKeys);
-    expect(flattenKeys(ko).sort()).toEqual(englishKeys);
-    expect(flattenKeys(ptBR).sort()).toEqual(englishKeys);
-    expect(flattenKeys(ru).sort()).toEqual(englishKeys);
-    expect(flattenKeys(zhCN).sort()).toEqual(englishKeys);
+    const englishKeys = canonicalKeys(en);
+    expect(canonicalKeys(ar)).toEqual(englishKeys);
+    expect(canonicalKeys(es)).toEqual(englishKeys);
+    expect(canonicalKeys(fr)).toEqual(englishKeys);
+    expect(canonicalKeys(ja)).toEqual(englishKeys);
+    expect(canonicalKeys(ko)).toEqual(englishKeys);
+    expect(canonicalKeys(ptBR)).toEqual(englishKeys);
+    expect(canonicalKeys(ru)).toEqual(englishKeys);
+    expect(canonicalKeys(zhCN)).toEqual(englishKeys);
+  });
+
+  it("includes every Arabic form for provider-usage durations", () => {
+    const arabicStrings = flattenStrings(ar);
+    for (const key of arabicProviderUsagePluralKeys) {
+      for (const suffix of arabicPluralSuffixes) {
+        expect(arabicStrings[`${key}_${suffix}`]).toBeTypeOf("string");
+      }
+    }
   });
 
   it("keeps non-English supported languages translated beyond fallback labels", () => {
@@ -244,6 +288,14 @@ describe("translation resources", () => {
       expect(pr.actions.addingToChat).not.toBe(englishPr.actions.addingToChat);
       expect(pr.accessibility.commentActions).not.toBe(englishPr.accessibility.commentActions);
       expect(pr.accessibility.threadActions).not.toBe(englishPr.accessibility.threadActions);
+      for (const verb of Object.keys(englishPr.activity) as (keyof typeof englishPr.activity)[]) {
+        expect(pr.activity[verb]).not.toBe(englishPr.activity[verb]);
+      }
+      for (const state of Object.keys(englishPr.states) as (keyof typeof englishPr.states)[]) {
+        expect(pr.states[state]).not.toBe(englishPr.states[state]);
+      }
+      expect(pr.thread.resolved).not.toBe(englishPr.thread.resolved);
+      expect(pr.thread.outdated).not.toBe(englishPr.thread.outdated);
       expect(resource.sidebar.statusGroupAccessibility).not.toBe(
         en.sidebar.statusGroupAccessibility,
       );

@@ -56,7 +56,13 @@ type ControlMessage =
 const CONTROL_PING_INTERVAL_MS = 10_000;
 const CONTROL_STALE_TIMEOUT_MS = 30_000;
 const CONTROL_READY_TIMEOUT_MS = 8_000;
-const RELAY_WEBSOCKET_OPTIONS = { handshakeTimeout: 10_000, perMessageDeflate: false } as const;
+const RELAY_WEBSOCKET_OPTIONS = {
+  handshakeTimeout: 10_000,
+  perMessageDeflate: false,
+  // Node cancels each non-final address when this expires, even if the next
+  // address is unreachable. Allow high-latency routes time to connect.
+  autoSelectFamilyAttemptTimeout: 5_000,
+} as const;
 
 function createDefaultRelayWebSocket(url: string): RelayWebSocketLike {
   return new WebSocket(url, RELAY_WEBSOCKET_OPTIONS);
@@ -420,6 +426,10 @@ async function attachEncryptedSocket(
   attachSocket: (ws: RelaySocketLike, metadata?: ExternalSocketMetadata) => Promise<void>,
   metadata?: ExternalSocketMetadata,
 ): Promise<void> {
+  const handshakeTimeout = setTimeout(() => {
+    logger.warn("relay_e2ee_handshake_timeout_terminating");
+    socket.terminate();
+  }, 15_000);
   try {
     const relayTransport = createRelayTransportAdapter(socket, logger);
     const emitter = new EventEmitter();
@@ -440,6 +450,7 @@ async function attachEncryptedSocket(
         emitter.emit("error", error);
       },
     });
+    clearTimeout(handshakeTimeout);
     const encryptedSocket = createEncryptedRelaySocket({
       channel,
       emitter,
@@ -459,6 +470,8 @@ async function attachEncryptedSocket(
     } catch {
       // ignore
     }
+  } finally {
+    clearTimeout(handshakeTimeout);
   }
 }
 

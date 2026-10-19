@@ -30,6 +30,7 @@ export const ko: TranslationResources = {
     back: "뒤로",
     loading: "불러오는 중...",
     actions: {
+      save: "저장",
       back: "뒤로",
       cancel: "취소",
       close: "닫기",
@@ -123,6 +124,8 @@ export const ko: TranslationResources = {
     input: {
       accessibilityLabel: "에이전트에게 메시지...",
       terminalAccessibilityLabel: "Terminal prompt",
+      fullscreen: "전체 화면",
+      exitFullscreen: "전체 화면 종료",
       focusHint: "{{shortcut}}로 포커스",
       addAttachment: "첨부 추가",
       interruptAgent: "에이전트 중단",
@@ -358,6 +361,7 @@ export const ko: TranslationResources = {
       details: "세부 정보",
     },
     dictation: {
+      paused: "마이크가 중단되었습니다. 재개를 기다리는 중…",
       start: "음성 받아쓰기 시작",
       cancel: "받아쓰기 취소",
       retry: "받아쓰기 다시 시도",
@@ -367,6 +371,7 @@ export const ko: TranslationResources = {
       failedRetry: "받아쓰기에 실패했습니다. 다시 시도하려면 누르세요.",
     },
     question: {
+      responseFailed: "응답을 보내지 못했습니다. 다시 시도해 주세요.",
       submit: "제출",
       next: "다음",
       answerPlaceholder: "답변을 입력하세요...",
@@ -534,6 +539,7 @@ export const ko: TranslationResources = {
       },
     },
     setup: {
+      updateHost: "작업 공간 설정 세부 정보를 보려면 호스트를 업데이트하세요",
       descriptor: {
         label: "설정",
         completed: "설정 완료",
@@ -611,6 +617,9 @@ export const ko: TranslationResources = {
       updateHost: "기본 터미널 렌더러를 사용하도록 호스트를 업데이트합니다.",
       unableToSubscribe: "터미널을 구독할 수 없습니다",
     },
+    sheet: {
+      openAsTab: "탭으로 열기",
+    },
     tabs: {
       loading: "불러오는 중...",
       modified: "저장되지 않은 변경사항",
@@ -626,7 +635,7 @@ export const ko: TranslationResources = {
       },
       switcher: {
         trigger: "탭 전환 ({{count}}개 열림)",
-        title: "탭 전환",
+        title: "워크스페이스 탭",
         searchPlaceholder: "탭 검색",
       },
       menu: {
@@ -723,6 +732,7 @@ export const ko: TranslationResources = {
     header: {
       actions: {
         workspaceActions: "워크스페이스 작업",
+        workspaceActionsUnhealthy: "워크스페이스 작업, 비정상 서비스가 있습니다",
         newAgent: "새 에이전트",
         newTerminal: "새 터미널",
         newBrowser: "새 브라우저 탭",
@@ -770,6 +780,8 @@ export const ko: TranslationResources = {
         exitCode: "종료 {{code}}",
         startFailed: "{{scriptName}}을(를) 시작하지 못했습니다",
         stopFailed: "{{scriptName}}를 중지하지 못했습니다.",
+        running: "실행 중",
+        runningCount: "{{count}}개 실행 중",
       },
     },
     tree: {
@@ -1077,6 +1089,8 @@ export const ko: TranslationResources = {
         },
         thread: {
           discussion: "토론 스레드",
+          resolved: "해결됨",
+          outdated: "오래됨",
         },
         errors: {
           statusLoadFailed: "풀 리퀘스트 상태를 불러올 수 없습니다",
@@ -1152,6 +1166,7 @@ export const ko: TranslationResources = {
       done: "완료",
     },
     display: {
+      showBackground: "백그라운드 표시",
       trigger: "표시 설정",
       heading: "표시",
       grouping: {
@@ -1327,8 +1342,9 @@ export const ko: TranslationResources = {
     },
     fields: {
       project: "프로젝트",
-      base: "기준",
+      branch: "브랜치",
       baseNotApplicable: "해당 없음",
+      host: "호스트",
     },
     titlePlaceholder: "제목(선택 사항)",
     errors: {
@@ -1658,13 +1674,18 @@ export const ko: TranslationResources = {
     title: "프로바이더 추가",
     search: "프로바이더 검색",
     noProviders: "프로바이더를 찾을 수 없습니다",
+    clearSearch: "검색 지우기",
     actions: {
       add: "추가",
+      addProvider: "{{provider}} 추가",
       adding: "추가 중",
       installed: "설치됨",
       cancel: "취소",
       installInstructions: "설치 안내",
       installInstructionsFor: "{{provider}} 설치 안내",
+    },
+    types: {
+      acp: "ACP",
     },
     errors: {
       unableToInstall: "프로바이더를 설치할 수 없습니다",
@@ -2012,6 +2033,17 @@ export const ko: TranslationResources = {
     accessibility: "컨텍스트 윈도우 {{percentage}}% 사용됨",
   },
   review: {
+    feedback: {
+      send: "피드백 보내기 ({{count}})",
+      sending: "피드백 전송 중 ({{count}})",
+      chooseAgent: "에이전트 선택",
+      sent: "{{recipient}}에게 피드백을 보냈습니다",
+      "no-agents": "피드백을 보내려면 이 작업 공간에서 에이전트 탭을 여세요.",
+      disconnected: "피드백을 보내려면 호스트에 연결하세요.",
+      "no-context": "저장된 댓글이 더 이상 이 변경 사항과 일치하지 않습니다.",
+      failed: "피드백 전송에 실패했습니다. 다시 시도하세요.",
+      prompt: "이 코드 리뷰를 반영해 주세요.",
+    },
     comment: {
       add: "리뷰 댓글 추가",
       edit: "리뷰 댓글 편집",
@@ -2022,6 +2054,70 @@ export const ko: TranslationResources = {
       cancelAccessibility: "리뷰 댓글 취소",
       save: "댓글",
       saveAccessibility: "리뷰 댓글 저장",
+    },
+  },
+  providerUsage: {
+    options: "설정",
+    refreshFailed: "사용량을 새로 고칠 수 없습니다",
+    noHosts: "연결된 호스트가 없습니다",
+    agentError: "사용량을 불러올 수 없습니다: {{reason}}",
+    pin: "고정",
+    unpin: "고정 해제",
+    displayAs: "백분율",
+    displayUsed: "사용됨",
+    displayRemaining: "남음",
+    showInSidebar: "사이드바에 요약 표시",
+    showInSidebarHint: "고정된 기간이 사이드바 하단에 표시됩니다",
+    runToRefresh: "{{command}} 명령을 실행하여 새로 고치세요.",
+    signInAgain: "다시 로그인하세요.",
+    loginRejected: "로그인이 거부되었습니다 (HTTP {{status}}). {{remedy}}",
+    loginExpired: "로그인이 {{relativeTime}}에 만료되었습니다. {{remedy}}",
+    title: "플랜 사용량",
+    refresh: "새로 고침",
+    refreshAll: "모두 새로 고침",
+    refreshing: "새로 고치는 중...",
+    loading: "사용량 불러오는 중...",
+    empty: "사용량 데이터가 없습니다",
+    errorTitle: "사용량을 불러올 수 없습니다",
+    hostUnavailable: "{{host}}에 연결하여 제공업체 사용량을 확인하세요",
+    hostUpgradeRequired: "{{host}}를 업데이트하여 제공업체 사용량을 확인하세요",
+    clientUnavailable: "호스트 연결이 준비되지 않았습니다",
+    retry: "다시 시도",
+    tooltipLoading: "플랜 사용량 불러오는 중...",
+    status: {
+      error: "오류",
+      unavailable: "사용할 수 없음",
+    },
+    values: {
+      used: "{{percentage}} 사용됨",
+      remaining: "{{amount}} 남음",
+    },
+    labels: {
+      session: "세션",
+      weekly: "주간",
+      monthly: "월간",
+      codeReview: "코드 검토",
+      credits: "크레딧",
+      monthlyCredits: "월간 크레딧",
+    },
+    duration: {
+      days: "{{value}}일",
+      hours: "{{value}}시간",
+      minutes: "{{value}}분",
+    },
+    timing: {
+      lastUpdated: "마지막 업데이트: {{relativeTime}}",
+      noSuccessfulUpdate: "성공한 업데이트가 없습니다",
+      resetTimePassed: "초기화 시간이 지났습니다",
+      resettingNow: "지금 재설정 중",
+      resetsIn: "{{duration}} 후 재설정",
+      runsOutNow: "지금 한도에 도달",
+      runsOutIn: "{{duration}} 후 한도에 도달",
+      justNow: "방금",
+      daysAgo: "{{value}}일 전",
+      hoursAgo: "{{value}}시간 전",
+      minutesAgo: "{{value}}분 전",
+      updated: "{{relativeTime}}에 업데이트됨",
     },
   },
   settings: {
@@ -2312,6 +2408,7 @@ export const ko: TranslationResources = {
       searchPlaceholder: "검색 단축키",
       unavailableOnMobile: "키보드 단축키는 데스크톱에서만 사용할 수 있습니다",
       capturePrompt: "단축키를 누르세요...",
+      captureIndexPrompt: "마지막에 1부터 9까지의 숫자를 입력하세요.",
       unassigned: "설정되지 않음",
       actions: {
         menu: "{{name}} 작업",

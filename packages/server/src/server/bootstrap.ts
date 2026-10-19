@@ -126,6 +126,7 @@ import { createPaseoWorktree as createRegisteredPaseoWorktree } from "./paseo-wo
 import { createWorkspaceProvisioningService } from "./session/workspace-provisioning/workspace-provisioning-service.js";
 import { createPaseoWorktreeWorkflow } from "./worktree-session.js";
 import { DownloadTokenStore } from "./file-download/token-store.js";
+import { formatAttachmentContentDisposition } from "./file-download/content-disposition.js";
 import type { OpenAiSpeechProviderConfig } from "./speech/providers/openai/config.js";
 import type { LocalSpeechProviderConfig } from "./speech/providers/local/config.js";
 import type { RequestedSpeechProviders } from "./speech/speech-types.js";
@@ -136,6 +137,7 @@ import { attachAgentStoragePersistence } from "./persistence-hooks.js";
 import { createAgentMcpServer } from "./agent/mcp-server.js";
 import {
   createPaseoToolCatalog,
+  createPaseoAgentToolManifest,
   type PaseoToolHostDependencies,
 } from "./agent/tools/paseo-tools.js";
 import type { PaseoToolRuntimeContext } from "./agent/tools/types.js";
@@ -414,7 +416,6 @@ export interface PaseoDaemonConfig {
   plugins?: Record<string, PluginSource>;
   pluginRegistries?: PluginRegistries;
   pluginRegistryUrl?: string;
-  pluginRegistryEnabled?: boolean;
   staticDir: string;
   mcpDebug: boolean;
   isDev?: boolean;
@@ -625,7 +626,6 @@ export async function createPaseoDaemon(
       usageSession: (id) => agentManager.usageSession(id),
     },
     managedSources: new ManagedPluginSources(config.paseoHome, {
-      enabled: config.pluginRegistryEnabled ?? false,
       registries: config.pluginRegistries,
       defaultUrl: config.pluginRegistryUrl,
     }),
@@ -833,18 +833,21 @@ export async function createPaseoDaemon(
     try {
       fileHandle = await open(entry.absolutePath, DOWNLOAD_OPEN_FLAGS);
       const fileStats = await fileHandle.stat();
+      if (res.destroyed) {
+        return;
+      }
       if (!fileStats.isFile()) {
         res.status(404).json({ error: "File not found" });
         return;
       }
 
-      const safeFileName = entry.fileName.replace(/["\r\n]/g, "_");
       res.setHeader("Content-Type", entry.mimeType);
-      res.setHeader("Content-Disposition", `attachment; filename="${safeFileName}"`);
+      res.setHeader("Content-Disposition", formatAttachmentContentDisposition(entry.fileName));
       res.setHeader("Content-Length", fileStats.size.toString());
 
       const stream = fileHandle.createReadStream();
       fileHandle = null;
+      res.once("close", () => stream.destroy());
       stream.on("error", (err) => {
         logger.error({ err }, "Failed to stream download");
         if (!res.headersSent) {
@@ -1033,10 +1036,13 @@ export async function createPaseoDaemon(
   const ensureWorkspaceForCreateExternal = async (
     cwd: string,
     firstAgentContext?: FirstAgentContext,
+    context?: { callerWorkspaceId?: string },
   ): Promise<string> => {
     const workspace = await workspaceProvisioning.createWorkspaceForDirectory(
       cwd,
       resolveFirstAgentPromptTitle(firstAgentContext),
+      undefined,
+      context,
     );
     if (firstAgentContext) {
       workspaceAutoName.scheduleForDirectory({
@@ -1083,8 +1089,9 @@ export async function createPaseoDaemon(
   const ensureWorkspaceForCreateAndBroadcastExternal = async (
     cwd: string,
     firstAgentContext?: FirstAgentContext,
+    context?: { callerWorkspaceId?: string },
   ): Promise<string> => {
-    const workspaceId = await ensureWorkspaceForCreateExternal(cwd, firstAgentContext);
+    const workspaceId = await ensureWorkspaceForCreateExternal(cwd, firstAgentContext, context);
     await emitWorkspaceUpdatesExternal([workspaceId]);
     return workspaceId;
   };
@@ -1401,11 +1408,12 @@ export async function createPaseoDaemon(
     emitWorkspaceUpdatesForWorkspaceIds: emitWorkspaceUpdatesExternal,
     workspaceRegistry,
     projectRegistry,
-    createDirectoryWorkspace: async (cwd, title, projectId) => {
+    createDirectoryWorkspace: async (cwd, title, projectId, context) => {
       const workspace = await workspaceProvisioning.createWorkspaceForDirectory(
         cwd,
         title,
         projectId,
+        context,
       );
       await emitWorkspaceUpdatesExternal([workspace.workspaceId]);
       return workspace;
@@ -1450,7 +1458,9 @@ export async function createPaseoDaemon(
   const createAgentToolCatalog = (runtime: PaseoToolRuntimeContext) =>
     createPaseoToolCatalog(createAgentToolHostDependencies(runtime));
   const setAgentProviderToolsEnabled = (enabled: boolean) => {
-    agentProviderRuntime.setPaseoToolCatalog(enabled ? createAgentToolCatalog({}) : null);
+    agentProviderRuntime.setPaseoToolCatalog(
+      enabled ? createPaseoAgentToolManifest(createAgentToolHostDependencies({})) : null,
+    );
   };
   agentManager.setPaseoToolCatalogFactory(createAgentToolCatalog);
   agentManager.setPaseoToolsEnabled(config.mcpInjectIntoAgents !== false);
@@ -1876,7 +1886,7 @@ export async function createPaseoDaemon(
 const AGENT_CLOSE_TIMEOUT_MS = 5_000;
 
 async function closeAllAgents(logger: Logger, agentManager: AgentManager): Promise<void> {
-  const agents = agentManager.listAgents();
+  const agents = agentManager.listAgents({ includeInternal: true });
   await Promise.all(
     agents.map(async (agent) => {
       try {

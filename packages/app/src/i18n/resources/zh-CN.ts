@@ -30,6 +30,7 @@ export const zhCN: TranslationResources = {
     back: "返回",
     loading: "加载中...",
     actions: {
+      save: "保存",
       back: "返回",
       cancel: "取消",
       close: "关闭",
@@ -123,6 +124,8 @@ export const zhCN: TranslationResources = {
     input: {
       accessibilityLabel: "给 Agent 发消息...",
       terminalAccessibilityLabel: "Terminal prompt",
+      fullscreen: "全屏",
+      exitFullscreen: "退出全屏",
       focusHint: "{{shortcut}} 聚焦",
       addAttachment: "添加附件",
       interruptAgent: "中断 Agent",
@@ -357,6 +360,7 @@ export const zhCN: TranslationResources = {
       details: "详情",
     },
     dictation: {
+      paused: "麦克风已中断，正在等待恢复…",
       start: "开始语音听写",
       cancel: "取消听写",
       retry: "重试听写",
@@ -366,6 +370,7 @@ export const zhCN: TranslationResources = {
       failedRetry: "听写失败。点按重试。",
     },
     question: {
+      responseFailed: "未能发送你的回复，请重试。",
       submit: "提交",
       next: "下一步",
       answerPlaceholder: "输入你的回答...",
@@ -533,6 +538,7 @@ export const zhCN: TranslationResources = {
       },
     },
     setup: {
+      updateHost: "更新主机以查看工作区设置详情",
       descriptor: {
         label: "Setup",
         completed: "Setup 已完成",
@@ -610,6 +616,9 @@ export const zhCN: TranslationResources = {
       updateHost: "请更新主机以使用原生终端渲染器。",
       unableToSubscribe: "无法订阅 Terminal",
     },
+    sheet: {
+      openAsTab: "作为标签页打开",
+    },
     tabs: {
       loading: "正在加载...",
       modified: "未保存的更改",
@@ -625,7 +634,7 @@ export const zhCN: TranslationResources = {
       },
       switcher: {
         trigger: "切换标签（已打开 {{count}} 个）",
-        title: "切换标签",
+        title: "Workspace 标签",
         searchPlaceholder: "搜索标签",
       },
       menu: {
@@ -719,6 +728,7 @@ export const zhCN: TranslationResources = {
     header: {
       actions: {
         workspaceActions: "Workspace 操作",
+        workspaceActionsUnhealthy: "Workspace 操作，有服务异常",
         newAgent: "新建 Agent",
         newTerminal: "新建 Terminal",
         newBrowser: "新建浏览器标签",
@@ -766,6 +776,8 @@ export const zhCN: TranslationResources = {
         exitCode: "exit {{code}}",
         startFailed: "启动 {{scriptName}} 失败",
         stopFailed: "停止 {{scriptName}} 失败",
+        running: "运行中",
+        runningCount: "{{count}} 个运行中",
       },
     },
     tree: {
@@ -1046,22 +1058,24 @@ export const zhCN: TranslationResources = {
           },
         },
         states: {
-          draft: "Draft",
-          merged: "已 merge",
+          draft: "草稿",
+          merged: "已合并",
           closed: "已关闭",
-          open: "Open",
+          open: "开放",
         },
         activity: {
           commented: "已评论",
           approved: "已批准",
           requestedChanges: "请求修改",
-          reviewed: "已 review",
+          reviewed: "已审查",
         },
         time: {
           justNow: "刚刚",
         },
         thread: {
           discussion: "讨论主题",
+          resolved: "已解决",
+          outdated: "已过时",
         },
         errors: {
           statusLoadFailed: "无法加载 Pull Request 状态",
@@ -1137,6 +1151,7 @@ export const zhCN: TranslationResources = {
       done: "已完成",
     },
     display: {
+      showBackground: "显示后台工作区",
       trigger: "显示偏好",
       heading: "显示",
       grouping: {
@@ -1309,8 +1324,9 @@ export const zhCN: TranslationResources = {
     },
     fields: {
       project: "项目",
-      base: "基线",
+      branch: "分支",
       baseNotApplicable: "不适用",
+      host: "主机",
     },
     titlePlaceholder: "标题（可选）",
     errors: {
@@ -1631,13 +1647,18 @@ export const zhCN: TranslationResources = {
     title: "添加 provider",
     search: "搜索 providers",
     noProviders: "未找到 providers",
+    clearSearch: "清除搜索",
     actions: {
       add: "添加",
+      addProvider: "添加 {{provider}}",
       adding: "正在添加",
       installed: "已安装",
       cancel: "取消",
       installInstructions: "安装说明",
       installInstructionsFor: "{{provider}} 安装说明",
+    },
+    types: {
+      acp: "ACP",
     },
     errors: {
       unableToInstall: "无法安装 provider",
@@ -1980,6 +2001,17 @@ export const zhCN: TranslationResources = {
     accessibility: "上下文窗口已使用 {{percentage}}%",
   },
   review: {
+    feedback: {
+      send: "发送反馈 ({{count}})",
+      sending: "正在发送反馈 ({{count}})",
+      chooseAgent: "选择智能体",
+      sent: "已向 {{recipient}} 发送反馈",
+      "no-agents": "请在此工作区打开智能体标签页以发送反馈。",
+      disconnected: "请连接到主机以发送反馈。",
+      "no-context": "保存的评论不再匹配此差异。",
+      failed: "发送反馈失败。请重试。",
+      prompt: "请处理此代码审查。",
+    },
     comment: {
       add: "添加 review 评论",
       edit: "编辑 review 评论",
@@ -1990,6 +2022,70 @@ export const zhCN: TranslationResources = {
       cancelAccessibility: "取消 review 评论",
       save: "评论",
       saveAccessibility: "保存 review 评论",
+    },
+  },
+  providerUsage: {
+    options: "设置",
+    refreshFailed: "无法刷新用量",
+    noHosts: "没有已连接的主机",
+    agentError: "无法加载用量：{{reason}}",
+    pin: "固定",
+    unpin: "取消固定",
+    displayAs: "百分比",
+    displayUsed: "已使用",
+    displayRemaining: "剩余",
+    showInSidebar: "在侧边栏显示摘要",
+    showInSidebarHint: "固定的时间窗口显示在侧边栏底部",
+    runToRefresh: "运行 {{command}} 以刷新。",
+    signInAgain: "请重新登录。",
+    loginRejected: "登录被拒绝（HTTP {{status}}）。{{remedy}}",
+    loginExpired: "登录已于{{relativeTime}}过期。{{remedy}}",
+    title: "套餐用量",
+    refresh: "刷新",
+    refreshAll: "全部刷新",
+    refreshing: "刷新中...",
+    loading: "正在加载用量...",
+    empty: "暂无用量数据",
+    errorTitle: "无法加载用量",
+    hostUnavailable: "连接到 {{host}} 以查看提供商用量",
+    hostUpgradeRequired: "更新 {{host}} 以查看提供商用量",
+    clientUnavailable: "主机连接尚未就绪",
+    retry: "重试",
+    tooltipLoading: "正在加载套餐用量...",
+    status: {
+      error: "错误",
+      unavailable: "不可用",
+    },
+    values: {
+      used: "已使用 {{percentage}}",
+      remaining: "剩余 {{amount}}",
+    },
+    labels: {
+      session: "会话",
+      weekly: "每周",
+      monthly: "每月",
+      codeReview: "代码审查",
+      credits: "积分",
+      monthlyCredits: "每月积分",
+    },
+    duration: {
+      days: "{{value}}天",
+      hours: "{{value}}小时",
+      minutes: "{{value}}分钟",
+    },
+    timing: {
+      lastUpdated: "上次更新于 {{relativeTime}}",
+      noSuccessfulUpdate: "尚无成功更新",
+      resetTimePassed: "重置时间已过",
+      resettingNow: "正在重置",
+      resetsIn: "将在 {{duration}}后重置",
+      runsOutNow: "即将用尽",
+      runsOutIn: "将在 {{duration}}后用尽",
+      justNow: "刚刚",
+      daysAgo: "{{value}}天前",
+      hoursAgo: "{{value}}小时前",
+      minutesAgo: "{{value}}分钟前",
+      updated: "更新于 {{relativeTime}}",
     },
   },
   settings: {
@@ -2274,6 +2370,7 @@ export const zhCN: TranslationResources = {
       searchPlaceholder: "搜索快捷键",
       unavailableOnMobile: "键盘快捷键仅在桌面端可用",
       capturePrompt: "按下快捷键...",
+      captureIndexPrompt: "请以 1 到 9 的数字结尾。",
       unassigned: "未设置",
       actions: {
         menu: "{{name}} 的操作",

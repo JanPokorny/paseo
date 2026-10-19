@@ -58,10 +58,6 @@ export default function contribute(server) {
   }
 }
 
-export async function openUsage(page: Page) {
-  await page.goto("/usage");
-}
-
 export async function refreshLoginUsage(page: Page) {
   await page.getByRole("button", { name: "Refresh Claude", exact: true }).click();
 }
@@ -138,4 +134,15 @@ export async function expectCodexReportedWindows(page: Page, shape: "seven-day-o
       /Codex Weekly 11% used, Codex GPT-5.3-Codex-Spark · 5-hour 0% used/,
     );
   }
+}
+
+export async function expectLoginUsageFreshness(page: Page, text: string, compact: boolean) {
+  const card = page.getByTestId("usage-report-login-journey:account");
+  if (compact) {
+    await expect(card.getByTestId("usage-freshness")).toHaveText(text);
+    return;
+  }
+  await card.getByRole("button", { name: "Refresh Claude", exact: true }).hover();
+  await expect(page.getByTestId("usage-freshness-tooltip")).toHaveText(text);
+  await page.mouse.move(0, 0);
 }
