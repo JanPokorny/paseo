@@ -169,3 +169,167 @@ describe("runRunCommand option validation", () => {
     );
   });
 });
+
+const daemonMocks = vi.hoisted(() => ({
+  connectToDaemon: vi.fn(),
+  createWorkspace: vi.fn(),
+  createAgent: vi.fn(),
+  setWorkspaceTitle: vi.fn(),
+  fetchWorkspaces: vi.fn(),
+  fetchAgent: vi.fn(),
+  close: vi.fn(),
+}));
+
+vi.mock("../../utils/client.js", () => ({
+  connectToDaemon: daemonMocks.connectToDaemon,
+  getDaemonHost: vi.fn(() => "ws://127.0.0.1:6767"),
+}));
+
+const {
+  connectToDaemon,
+  createWorkspace,
+  createAgent,
+  setWorkspaceTitle,
+  fetchWorkspaces,
+  fetchAgent,
+  close,
+} = daemonMocks;
+
+describe("run workspace titling", () => {
+  const originalAgentId = process.env.PASEO_AGENT_ID;
+  const originalWorkspaceId = process.env.PASEO_WORKSPACE_ID;
+  const prompt = "Fix the flaky checkout test";
+  const title = "↳ 🛠️ Safety-classifier on CurveBender";
+  const existingWorkspaceId = "wks_fedcba9876543210";
+
+  beforeEach(() => {
+    delete process.env.PASEO_AGENT_ID;
+    delete process.env.PASEO_WORKSPACE_ID;
+
+    connectToDaemon.mockReset();
+    createWorkspace.mockReset();
+    createAgent.mockReset();
+    setWorkspaceTitle.mockReset();
+    fetchWorkspaces.mockReset();
+    fetchAgent.mockReset();
+    close.mockReset();
+
+    createWorkspace.mockResolvedValue({
+      workspace: {
+        id: "wks_0123456789abcdef",
+        name: "Generated workspace",
+        workspaceDirectory: "/project/new",
+        gitRuntime: { currentBranch: "main" },
+      },
+      error: null,
+    });
+    createAgent.mockImplementation(
+      async (input: { provider: string; cwd: string; title?: string }) => ({
+        id: "agent-created",
+        status: "idle",
+        provider: input.provider,
+        cwd: input.cwd,
+        title: input.title ?? null,
+      }),
+    );
+    fetchWorkspaces.mockImplementation(async ({ filter }: { filter: { query: string } }) => ({
+      entries: [{ id: filter.query, workspaceDirectory: "/project/existing" }],
+      pageInfo: { nextCursor: null },
+    }));
+    fetchAgent.mockImplementation(async ({ agentId }: { agentId: string }) => {
+      if (agentId === process.env.PASEO_AGENT_ID) return { agent: { id: agentId } };
+      throw new Error(`Agent not found: ${agentId}`);
+    });
+    close.mockResolvedValue(undefined);
+    connectToDaemon.mockResolvedValue({
+      createWorkspace,
+      createAgent,
+      setWorkspaceTitle,
+      fetchWorkspaces,
+      fetchAgent,
+      close,
+    });
+  });
+
+  afterEach(() => {
+    if (originalAgentId === undefined) delete process.env.PASEO_AGENT_ID;
+    else process.env.PASEO_AGENT_ID = originalAgentId;
+    if (originalWorkspaceId === undefined) delete process.env.PASEO_WORKSPACE_ID;
+    else process.env.PASEO_WORKSPACE_ID = originalWorkspaceId;
+  });
+
+  function runWithoutWaiting(options: Omit<AgentRunOptions, "daemonTarget" | "provider" | "cwd">) {
+    return runRunCommand(
+      prompt,
+      { ...options, provider: "codex", cwd: "/project", wait: false, daemonTarget },
+      {} as never,
+    );
+  }
+
+  it.each([
+    ["bare", undefined],
+    ["local", "local"],
+    ["worktree", "worktree"],
+  ] as const)("titles the workspace a %s run creates", async (_label, newWorkspace) => {
+    await runWithoutWaiting({ newWorkspace, title });
+
+    expect(createWorkspace).toHaveBeenCalledTimes(1);
+    expect(createWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title,
+        firstAgentContext: { prompt },
+        source: expect.objectContaining({
+          kind: newWorkspace === "worktree" ? "worktree" : "directory",
+        }),
+      }),
+    );
+    expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ title }));
+  });
+
+  it.each(["local", "worktree"] as const)(
+    "gives the daemon prompt context for a %s workspace when no title is set",
+    async (newWorkspace) => {
+      await runWithoutWaiting({ newWorkspace });
+
+      expect(createWorkspace).toHaveBeenCalledWith(
+        expect.objectContaining({ firstAgentContext: { prompt } }),
+      );
+      expect(createWorkspace.mock.calls[0][0]).not.toHaveProperty("title");
+      expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ title: undefined }));
+    },
+  );
+
+  it("does not retitle the workspace selected by --workspace", async () => {
+    await runWithoutWaiting({ workspace: existingWorkspaceId, title });
+
+    expect(createWorkspace).not.toHaveBeenCalled();
+    expect(setWorkspaceTitle).not.toHaveBeenCalled();
+    expect(createAgent).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: existingWorkspaceId, title }),
+    );
+  });
+
+  it("does not retitle the caller agent's workspace", async () => {
+    process.env.PASEO_AGENT_ID = "parent-agent";
+
+    await runWithoutWaiting({ title });
+
+    expect(createWorkspace).not.toHaveBeenCalled();
+    expect(setWorkspaceTitle).not.toHaveBeenCalled();
+    expect(createAgent).toHaveBeenCalledWith(
+      expect.objectContaining({ callerAgentId: "parent-agent", title }),
+    );
+  });
+
+  it("does not retitle the PASEO_WORKSPACE_ID workspace", async () => {
+    process.env.PASEO_WORKSPACE_ID = existingWorkspaceId;
+
+    await runWithoutWaiting({ title });
+
+    expect(createWorkspace).not.toHaveBeenCalled();
+    expect(setWorkspaceTitle).not.toHaveBeenCalled();
+    expect(createAgent).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: existingWorkspaceId, title }),
+    );
+  });
+});

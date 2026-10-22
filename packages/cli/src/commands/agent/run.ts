@@ -34,7 +34,10 @@ export function addRunOptions(cmd: Command): Command {
       // COMPAT(detachRunFlag): --detach used to mean background execution, not
       // ownership transfer. Added in v0.2.0; remove after 2027-01-17.
       .addOption(new Option("--detach", "Legacy alias for --no-wait").hideHelp())
-      .option("--title <title>", "Assign a title to the agent")
+      .option(
+        "--title <title>",
+        "Assign a title to the agent and any workspace created for this run",
+      )
       .addOption(new Option("--name <name>", "Hidden alias for --title").hideHelp())
       .option(
         "--provider <provider>",
@@ -546,6 +549,8 @@ async function resolveRunWorkspace(
   options: AgentRunOptions,
   cwd: string,
   callerAgentId: string | undefined,
+  title: string | undefined,
+  prompt: string,
 ): Promise<RunWorkspace> {
   const newWorkspace = resolveNewWorkspaceKind(options);
   const explicit = newWorkspace ? undefined : options.workspace?.trim();
@@ -564,12 +569,14 @@ async function resolveRunWorkspace(
     return resolveExistingRunWorkspace(client, ambientWorkspaceId);
   }
 
-  // TODO: thread the run `prompt` as firstAgentContext so workspace-level
-  // title/branch generation picks up the task description (U8/U6 deferred).
   const source = buildRunWorkspaceSource(options, cwd);
+  const workspaceTitle = title?.trim();
   const result = await client.createWorkspace({
     source,
     ...(callerAgentId ? { callerAgentId } : {}),
+    // The daemon keeps an explicit title; the prompt still seeds generated naming.
+    firstAgentContext: { prompt },
+    ...(workspaceTitle ? { title: workspaceTitle } : {}),
   });
 
   if (!result.workspace) {
@@ -625,7 +632,14 @@ export async function runRunCommand(
     const requestEnv = Object.keys(env).length > 0 ? env : undefined;
 
     const callerAgentId = await resolveCallerAgentId(client);
-    const workspace = await resolveRunWorkspace(client, options, cwd, callerAgentId);
+    const workspace = await resolveRunWorkspace(
+      client,
+      options,
+      cwd,
+      callerAgentId,
+      resolvedTitle,
+      prompt,
+    );
     const workspaceId = workspace.id;
     const runCwd = workspace.cwd;
 
